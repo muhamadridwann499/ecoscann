@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Peluang UMKM — EcoScan{% endblock %}
+{% block page_title %}Peluang UMKM{% endblock %}
+{% block breadcrumb %}Edukasi &rsaquo; Peluang UMKM{% endblock %}
+
+{% block content %}
+<div class="page-hero-sm">
+  <h1>💡 Peluang UMKM dari Sampah Daur Ulang</h1>
+  <p>{{ umkm_list|length }} ide bisnis konkret — selain menjual langsung ke pengepul. Klik panduan untuk langkah detail.</p>
+</div>
+
+<div style="padding:.75rem 2rem 0">
+  <div style="background:rgba(239,159,39,.08);border:1px solid rgba(239,159,39,.25);border-radius:8px;padding:11px 16px;font-size:13px;color:#EF9F27;display:flex;gap:8px;align-items:center">
+    <i class="fas fa-lightbulb"></i> Semua ide bisnis berikut bisa dimulai dari rumah dengan modal Rp 0 – Rp 8 juta.
+  </div>
+</div>
+
+<!-- Filter pills -->
+<div style="padding:1rem 2rem 0;display:flex;gap:8px;flex-wrap:wrap">
+  <button class="waste-pill active" onclick="filterUmkm('all',this)">Semua ({{ umkm_list|length }})</button>
+  <button class="waste-pill" onclick="filterUmkm('Kardus',this)">📦 Kardus</button>
+  <button class="waste-pill" onclick="filterUmkm('Kaca',this)">🫙 Kaca</button>
+  <button class="waste-pill" onclick="filterUmkm('Logam',this)">🥫 Logam</button>
+  <button class="waste-pill" onclick="filterUmkm('Kertas',this)">📄 Kertas</button>
+  <button class="waste-pill" onclick="filterUmkm('Plastik',this)">♻️ Plastik</button>
+  <button class="waste-pill" onclick="filterUmkm('Sampah Umum',this)">🗑️ Sampah Umum</button>
+</div>
+
+<div style="padding:1.25rem 2rem">
+  <div class="umkm-grid" id="umkmGrid">
+    {% for u in umkm_list %}
+    <div class="umkm-card" data-waste="{{ u.waste_label }}">
+      <div class="umkm-card-icon">{{ u.icon }}</div>
+      <h3>{{ u.name }}</h3>
+      <div class="waste-tag">{{ u.waste_icon }} dari {{ u.waste_label }}</div>
+      <p>{{ u.desc }}</p>
+      <div class="umkm-profit-row">
+        <span class="umkm-profit-label">Estimasi/bulan</span>
+        <span class="umkm-profit-val">{{ u.profit }}</span>
+      </div>
+      <button class="umkm-guide-btn" onclick="openGuide('{{ u.name|replace("'","\\'") }}')">
+        📖 Lihat Panduan Mulai Usaha
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ══ MODAL PANDUAN ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-head">
+      <div class="modal-head-icon" id="mIcon">💡</div>
+      <div class="modal-head-info">
+        <h2 id="mTitle">Panduan Mulai Usaha</h2>
+        <p id="mSub"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="mBody" style="max-height:70vh;overflow-y:auto"></div>
+    <div class="modal-foot">
+      <button onclick="closeModal()" style="background:rgba(255,255,255,.06);border:1px solid #1e1e35;color:#888;padding:9px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px">Tutup</button>
+      <button onclick="closeModal()" style="background:#00ff88;border:none;color:#000;padding:9px 24px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700"><i class="fas fa-check"></i> Siap Mulai!</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const GUIDES = {{ guides|tojson }};
+const PLATFORM_URLS = {{ platform_urls|tojson }};
+
+function filterUmkm(waste, btn){
+  document.querySelectorAll('.waste-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.umkm-card').forEach(c=>{
+    c.style.display = (waste==='all' || c.dataset.waste===waste) ? '' : 'none';
+  });
+}
+
+function openGuide(name){
+  const g = GUIDES[name];
+  document.getElementById('mIcon').textContent = g ? g.icon : '💡';
+  document.getElementById('mTitle').textContent = name;
+  document.getElementById('mSub').textContent = g ? 'Dari limbah '+g.waste+' · Modal: '+g.modal : '';
+
+  if(!g){
+    document.getElementById('mBody').innerHTML='<div style="text-align:center;padding:2rem;color:#555"><div style="font-size:48px;margin-bottom:1rem">🚧</div><div>Panduan untuk <strong style="color:#eee">'+name+'</strong> segera hadir.</div></div>';
+    openOverlay(); return;
+  }
+
+  const platformHtml = g.platforms.map(p=>{
+    const url = PLATFORM_URLS[p] || '#';
+    return `<a href="${url}" target="_blank" rel="noopener" class="platform-tag platform-link">${p} <i class="fas fa-external-link-alt" style="font-size:10px;opacity:.6"></i></a>`;
+  }).join('');
+
+  document.getElementById('mBody').innerHTML = `
+    <div class="modal-section">
+      <div class="modal-info-row">
+        <div class="modal-info-box"><div class="val">${g.modal}</div><div class="lbl">Modal Awal</div></div>
+        <div class="modal-info-box"><div class="val">${g.profit}</div><div class="lbl">Est. Pendapatan/Bln</div></div>
+        <div class="modal-info-box"><div class="val">${g.waktu}</div><div class="lbl">Waktu Mulai</div></div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title"><i class="fas fa-list-ol"></i> Langkah Memulai</div>
+      <div class="modal-steps">${g.steps.map((s,i)=>`
+        <div class="modal-step">
+          <div class="modal-step-num">${i+1}</div>
+          <div class="modal-step-body"><h4>${s.title}</h4><p>${s.desc}</p></div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title"><i class="fas fa-box"></i> Checklist Perlengkapan</div>
+      <ul class="modal-checklist">${g.checklist.map(c=>`<li><i class="fas fa-check-square"></i><span>${c}</span></li>`).join('')}</ul>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title"><i class="fas fa-store"></i> Platform Pemasaran</div>
+      <div class="platform-tags">${platformHtml}</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title"><i class="fas fa-lightbulb"></i> Tips & Trik</div>
+      <ul class="modal-checklist">${g.tips.map(t=>`<li><i class="fas fa-star" style="color:#EF9F27"></i><span>${t}</span></li>`).join('')}</ul>
+    </div>`;
+  openOverlay();
+}
+function openOverlay(){
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeModalOutside(e){ if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+</script>
+{% endblock %}

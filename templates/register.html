@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Akun — EcoScan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--accent:#00ff88;--bg:#07070f;--card:#0f0f1e;--border:#1a1a30;--text:#e0e0f0;--text2:#888;--danger:#ff4444}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;position:relative;overflow:hidden}
+    .bg-glow{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,136,.05) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+    .bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+    .card{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.5rem 2rem;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+    .logo{text-align:center;margin-bottom:1.75rem}
+    .logo-icon{width:56px;height:56px;background:linear-gradient(135deg,#00ff88,#00c86e);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:.75rem;box-shadow:0 8px 32px rgba(0,255,136,.25)}
+    .logo h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:4px}
+    .logo p{font-size:.85rem;color:var(--text2)}
+    .flash-box{padding:.7rem 1rem;border-radius:10px;font-size:.83rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.5rem}
+    .flash-error{background:rgba(255,68,68,.12);border:1px solid rgba(255,68,68,.3);color:#ff6b6b}
+    .flash-success{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:var(--accent)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .form-group{margin-bottom:1.1rem}
+    .form-group.full{grid-column:1/-1}
+    label{display:block;font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em}
+    .input-wrap{position:relative}
+    .input-wrap i.icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#444;font-size:13px}
+    input{width:100%;padding:.75rem .75rem .75rem 2.4rem;background:rgba(255,255,255,.04);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;transition:.2s}
+    input:focus{border-color:var(--accent);background:rgba(0,255,136,.03)}
+    .pw-rules{font-size:.75rem;color:#555;margin-top:.35rem;display:flex;gap:.75rem;flex-wrap:wrap}
+    .pw-rules span{display:flex;align-items:center;gap:4px}
+    .pw-rules span i{font-size:11px}
+    .rule-ok{color:var(--accent)!important}
+    .btn-register{width:100%;padding:.88rem;background:linear-gradient(135deg,#00ff88,#00c86e);border:none;border-radius:10px;color:#000;font-size:.95rem;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:.2s;margin-top:.25rem}
+    .btn-register:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,255,136,.3)}
+    .divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:#333;font-size:.75rem}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .footer-link{text-align:center;font-size:.85rem;color:var(--text2)}
+    .footer-link a{color:var(--accent);text-decoration:none;font-weight:600}
+    .footer-link a:hover{text-decoration:underline}
+    .eye-btn{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;cursor:pointer;padding:4px;font-size:12px}
+    .eye-btn:hover{color:#aaa}
+    .strength-bar{height:3px;border-radius:2px;background:#1a1a30;margin-top:.4rem;overflow:hidden}
+    .strength-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
+  </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">♻</div>
+    <h1>Buat Akun Baru</h1>
+    <p>Bergabung dengan EcoScan</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div class="flash-box flash-{{ cat }}">
+          <i class="fas fa-{{ 'check-circle' if cat=='success' else 'exclamation-circle' }}"></i>
+          <span>{{ msg }}</span>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" id="regForm">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Username *</label>
+        <div class="input-wrap">
+          <i class="fas fa-user icon"></i>
+          <input type="text" name="username" placeholder="min. 3 karakter" required minlength="3" value="{{ form.get('username','') }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <div class="input-wrap">
+          <i class="fas fa-id-card icon"></i>
+          <input type="text" name="full_name" placeholder="Opsional" value="{{ form.get('full_name','') }}">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Email *</label>
+      <div class="input-wrap">
+        <i class="fas fa-envelope icon"></i>
+        <input type="email" name="email" placeholder="contoh@email.com" required value="{{ form.get('email','') }}">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Password *</label>
+      <div class="input-wrap">
+        <i class="fas fa-lock icon"></i>
+        <input type="password" name="password" id="pw1" placeholder="min. 6 karakter" required minlength="6" oninput="checkPw()">
+        <button type="button" class="eye-btn" onclick="togglePw('pw1','eye1')"><i id="eye1" class="fas fa-eye"></i></button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+      <div class="pw-rules">
+        <span id="r1"><i class="fas fa-circle"></i> 6+ karakter</span>
+        <span id="r2"><i class="fas fa-circle"></i> Angka</span>
+        <span id="r3"><i class="fas fa-circle"></i> Huruf besar</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Konfirmasi Password *</label>
+      <div class="input-wrap">
+        <i class="fas fa-lock icon"></i>
+        <input type="password" name="confirm_password" id="pw2" placeholder="Ulangi password" required oninput="checkMatch()">
+        <button type="button" class="eye-btn" onclick="togglePw('pw2','eye2')"><i id="eye2" class="fas fa-eye"></i></button>
+      </div>
+      <div id="matchMsg" style="font-size:.75rem;margin-top:.35rem;color:#555"></div>
+    </div>
+
+    <button type="submit" class="btn-register"><i class="fas fa-user-plus"></i> Buat Akun</button>
+  </form>
+
+  <div class="divider">sudah punya akun?</div>
+  <div class="footer-link">
+    <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Masuk sekarang</a>
+  </div>
+</div>
+
+<script>
+function togglePw(id,iconId){
+  const i=document.getElementById(id),e=document.getElementById(iconId);
+  if(i.type==='password'){i.type='text';e.className='fas fa-eye-slash'}
+  else{i.type='password';e.className='fas fa-eye'}
+}
+function checkPw(){
+  const v=document.getElementById('pw1').value;
+  const r1=document.getElementById('r1'),r2=document.getElementById('r2'),r3=document.getElementById('r3');
+  const f=document.getElementById('strengthFill');
+  let score=0;
+  const ok1=v.length>=6,ok2=/\d/.test(v),ok3=/[A-Z]/.test(v);
+  if(ok1){score++;r1.className='rule-ok'}else{r1.className=''}
+  if(ok2){score++;r2.className='rule-ok'}else{r2.className=''}
+  if(ok3){score++;r3.className='rule-ok'}else{r3.className=''}
+  const colors=['#ff4444','#ff9900','#00ff88'];
+  const widths=['33%','66%','100%'];
+  f.style.width=score>0?widths[score-1]:'0';
+  f.style.background=score>0?colors[score-1]:'';
+  checkMatch();
+}
+function checkMatch(){
+  const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
+  const m=document.getElementById('matchMsg');
+  if(!p2)return m.innerHTML='';
+  if(p1===p2)m.innerHTML='<span style="color:#00ff88"><i class="fas fa-check"></i> Password cocok</span>';
+  else m.innerHTML='<span style="color:#ff4444"><i class="fas fa-times"></i> Password tidak cocok</span>';
+}
+</script>
+</body>
+</html>

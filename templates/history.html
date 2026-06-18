@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Riwayat — EcoScan{% endblock %}
+{% block page_title %}Riwayat Klasifikasi{% endblock %}
+{% block breadcrumb %}Riwayat{% endblock %}
+{% block content %}
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Riwayat <span class="gradient-text">Klasifikasi</span></h1>
+    <p>{{ total }} total klasifikasi tersimpan dalam database</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if rows %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Gambar</th>
+            <th>File</th>
+            <th>Kategori</th>
+            <th>Keyakinan</th>
+            <th>Daur Ulang</th>
+            <th>Waktu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td class="td-id">{{ row.id }}</td>
+            <td class="td-img">
+              <img src="{{ url_for('static', filename='uploads/' + row.image_filename) }}"
+                   alt="" class="table-thumb"
+                   onerror="this.src='{{ url_for('static', filename='img/placeholder.svg') }}'">
+            </td>
+            <td class="td-file">{{ row.original_filename or row.image_filename }}</td>
+            <td>
+              <span class="table-badge" style="background:{{ row.color_code or '#888' }}22;border-color:{{ row.color_code or '#888' }}">
+                {{ row.icon or '🗑️' }} {{ row.label or row.predicted_class }}
+              </span>
+            </td>
+            <td>
+              <div class="conf-mini">
+                <div class="conf-mini-bar" style="width:{{ "%.0f"|format(row.confidence_pct) }}%;background:{{ row.color_code or '#888' }}"></div>
+                <span>{{ "%.1f"|format(row.confidence_pct) }}%</span>
+              </div>
+            </td>
+            <td>
+              {% if row.is_recyclable %}
+                <span class="badge-pill badge-green"><i class="fas fa-recycle"></i> Ya</span>
+              {% else %}
+                <span class="badge-pill badge-grey"><i class="fas fa-times"></i> Tidak</span>
+              {% endif %}
+            </td>
+            <td class="td-time">{{ row.created_at.strftime('%d/%m/%Y %H:%M') if row.created_at else '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pages > 1 %}
+    <div class="pagination">
+      {% if page > 1 %}<a href="?page={{ page-1 }}" class="page-btn">‹ Prev</a>{% endif %}
+      {% for p in range(1, pages+1) %}
+        {% if p == page %}<span class="page-btn page-active">{{ p }}</span>
+        {% elif p <= 3 or p >= pages-2 or (p >= page-1 and p <= page+1) %}
+          <a href="?page={{ p }}" class="page-btn">{{ p }}</a>
+        {% elif p == 4 or p == pages-3 %}<span class="page-ellipsis">…</span>
+        {% endif %}
+      {% endfor %}
+      {% if page < pages %}<a href="?page={{ page+1 }}" class="page-btn">Next ›</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>Belum ada riwayat</h3>
+      <p>Mulai klasifikasi sampah untuk melihat riwayat di sini</p>
+      <a href="{{ url_for('classify') }}" class="btn btn-primary">Mulai Klasifikasi</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

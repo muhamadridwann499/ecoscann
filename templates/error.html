@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}EcoScan — Error {{ code }}{% endblock %}
+{% block content %}
+<section class="error-page">
+  <div class="container">
+    <div class="error-code">{{ code }}</div>
+    <h2>{{ msg }}</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-primary"><i class="fas fa-home"></i> Kembali ke Beranda</a>
+  </div>
+</section>
+{% endblock %}

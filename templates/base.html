@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}EcoScan{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="has-sidebar">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <a href="{{ url_for('index') }}" class="sidebar-logo">
+      <div class="sidebar-logo-icon">♻</div>
+      <span class="sidebar-logo-name">EcoScan</span>
+    </a>
+    <div class="sidebar-logo-sub">Klasifikasi Sampah CNN</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Utama</div>
+    <a href="{{ url_for('index') }}"    class="sidebar-link {% if request.endpoint=='index'    %}active{% endif %}"><i class="fas fa-home"></i><span>Beranda</span></a>
+    <a href="{{ url_for('classify') }}" class="sidebar-link {% if request.endpoint=='classify' %}active{% endif %}"><i class="fas fa-camera"></i><span>Klasifikasi</span></a>
+    <a href="{{ url_for('history') }}"  class="sidebar-link {% if request.endpoint=='history'  %}active{% endif %}"><i class="fas fa-history"></i><span>Riwayat</span></a>
+    <a href="{{ url_for('stats') }}"    class="sidebar-link {% if request.endpoint=='stats'    %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>Statistik</span></a>
+
+    <div class="nav-section-label">Edukasi &amp; UMKM</div>
+    <a href="{{ url_for('panduan') }}"    class="sidebar-link {% if request.endpoint=='panduan'    %}active{% endif %}"><i class="fas fa-recycle"></i><span>Panduan Daur Ulang</span></a>
+    <a href="{{ url_for('pengolahan') }}" class="sidebar-link {% if request.endpoint=='pengolahan' %}active{% endif %}"><i class="fas fa-cogs"></i><span>Cara Pengolahan</span></a>
+    <a href="{{ url_for('manfaat') }}"    class="sidebar-link {% if request.endpoint=='manfaat'    %}active{% endif %}"><i class="fas fa-seedling"></i><span>Manfaat Daur Ulang</span></a>
+    <a href="{{ url_for('umkm') }}"       class="sidebar-link {% if request.endpoint=='umkm'       %}active{% endif %}"><i class="fas fa-store"></i><span>Peluang UMKM</span></a>
+
+    {% if session.get('role') == 'admin' %}
+    <div class="nav-section-label">Admin Panel</div>
+    <a href="{{ url_for('dashboard') }}"         class="sidebar-link {% if request.endpoint=='dashboard'         %}active{% endif %}"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+    <a href="{{ url_for('admin_users') }}"        class="sidebar-link {% if request.endpoint in ['admin_users','admin_user_detail'] %}active{% endif %}"><i class="fas fa-users-cog"></i><span>Manajemen User</span></a>
+    <a href="{{ url_for('admin_umkm_gallery') }}" class="sidebar-link {% if request.endpoint=='admin_umkm_gallery' %}active{% endif %}"><i class="fas fa-images"></i><span>Galeri UMKM</span></a>
+    {% endif %}
+
+    <div class="nav-section-label">Akun</div>
+    {% if session.get('user_id') %}
+    <div class="sidebar-user-info">
+      <div class="sidebar-avatar">{{ session.get('username','?')[0]|upper }}</div>
+      <div>
+        <div class="sidebar-username">{{ session.get('username') }}</div>
+        <div class="sidebar-role-badge {% if session.get('role')=='admin' %}role-admin{% else %}role-user{% endif %}">{{ session.get('role','user') }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="sidebar-link sidebar-link-danger"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    {% else %}
+    <a href="{{ url_for('login') }}"    class="sidebar-link {% if request.endpoint=='login'    %}active{% endif %}"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
+    <a href="{{ url_for('register') }}" class="sidebar-link {% if request.endpoint=='register' %}active{% endif %}"><i class="fas fa-user-plus"></i><span>Daftar</span></a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-label">Tugas Akhir · 2025</div>
+    <div class="sidebar-footer-sub">MobileNetV2 · Flask · MySQL</div>
+  </div>
+</aside>
+
+<!-- ══ MOBILE TOPBAR ══ -->
+<div class="topbar-mobile" id="topbarMobile">
+  <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+  <span class="topbar-title">{% block page_title %}EcoScan{% endblock %}</span>
+  <div class="topbar-right">
+    {% if session.get('user_id') %}
+    <span class="topbar-user-chip">{{ session.get('username') }}</span>
+    {% endif %}
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ══ MAIN ══ -->
+<div class="main-wrap">
+  <div class="main-topbar">
+    <div class="main-topbar-left">
+      <span class="page-bc">{% block breadcrumb %}{% endblock %}</span>
+    </div>
+    <div class="main-topbar-right">
+      {% if session.get('user_id') %}
+      <div class="topbar-user-pill">
+        <div class="topbar-avatar">{{ session.get('username','?')[0]|upper }}</div>
+        <span>{{ session.get('username') }}</span>
+        {% if session.get('role')=='admin' %}<span class="pill-admin">admin</span>{% endif %}
+      </div>
+      <a href="{{ url_for('logout') }}" class="topbar-logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+      {% else %}
+      <a href="{{ url_for('login') }}"    class="topbar-chip-btn">Login</a>
+      <a href="{{ url_for('register') }}" class="topbar-chip-btn topbar-chip-green">Daftar</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-wrap">
+      {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}">
+        <i class="fas fa-{{ 'check-circle' if cat=='success' else 'info-circle' if cat=='info' else 'exclamation-circle' }}"></i>
+        {{ msg }}
+        <button onclick="this.parentElement.remove()" class="flash-close">×</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span class="footer-brand"><span>♻</span> EcoScan</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-sub">Sistem Klasifikasi Sampah CNN · Tugas Akhir 2025</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

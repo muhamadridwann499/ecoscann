@@ -1,0 +1,21 @@
+{
+  "version": "v2.0",
+  "architecture": "Custom CNN (trained from scratch)",
+  "val_accuracy": 0.6063618063926697,
+  "total_params": 637894,
+  "dataset_size": 2527,
+  "total_epochs": 25,
+  "classes": [
+    "cardboard",
+    "glass",
+    "metal",
+    "paper",
+    "plastic",
+    "trash"
+  ],
+  "input_size": [
+    128,
+    128
+  ],
+  "created_at": "2026-06-15 07:12:59"
+}

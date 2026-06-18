@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Detail User: {{ user.username }} — EcoScan{% endblock %}
+{% block page_title %}Detail User{% endblock %}
+{% block breadcrumb %}Admin &rsaquo; <a href="{{ url_for('admin_users') }}" style="color:#555;text-decoration:none">Manajemen User</a> &rsaquo; {{ user.username }}{% endblock %}
+
+{% block content %}
+<div style="padding:1.5rem 2rem">
+  <!-- Profile Card -->
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.5rem;margin-bottom:1.5rem">
+    <div class="eco-card" style="padding:1.5rem;text-align:center">
+      <div style="width:72px;height:72px;background:linear-gradient(135deg,#00ff88,#00c86e);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#000;margin:0 auto 1rem">{{ user.username[0]|upper }}</div>
+      <div style="font-size:18px;font-weight:700;color:#eee;margin-bottom:4px">{{ user.username }}</div>
+      {% if user.full_name %}<div style="font-size:13px;color:#888;margin-bottom:8px">{{ user.full_name }}</div>{% endif %}
+      <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
+        <span class="role-chip {% if user.role=='admin' %}chip-admin{% else %}chip-user{% endif %}">{{ user.role }}</span>
+        {% if user.is_active %}<span class="status-chip chip-active"><i class="fas fa-circle"></i> Aktif</span>
+        {% else %}<span class="status-chip chip-inactive"><i class="fas fa-circle"></i> Nonaktif</span>{% endif %}
+      </div>
+      <div style="font-size:12px;color:#555;line-height:1.8">
+        <div><i class="fas fa-envelope" style="width:16px"></i> {{ user.email or 'Tidak ada email' }}</div>
+        <div><i class="fas fa-calendar" style="width:16px"></i> Bergabung {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}</div>
+        <div><i class="fas fa-clock" style="width:16px"></i> Login {{ user.last_login.strftime('%d %b %Y') if user.last_login else 'Belum pernah' }}</div>
+      </div>
+      {% if user.id != session.get('user_id') %}
+      <button onclick="document.getElementById('editPanel').style.display=document.getElementById('editPanel').style.display==='none'?'block':'none'"
+        style="width:100%;margin-top:1rem;padding:8px;background:rgba(0,255,136,.1);color:#00ff88;border:1px solid rgba(0,255,136,.2);border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700">
+        <i class="fas fa-edit"></i> Edit Data User
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-content:start">
+      <div class="stat-chip"><div class="val">{{ user.total_classifications or 0 }}</div><div class="lbl">Total Klasifikasi</div></div>
+      <div class="stat-chip"><div class="val" style="color:#EF9F27">{{ '%.1f'|format(user.avg_confidence or 0) }}%</div><div class="lbl">Rata-rata Confidence</div></div>
+      {% if class_summary %}
+      <div class="stat-chip" style="grid-column:1/-1">
+        <div style="font-size:11px;color:#555;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Distribusi Jenis Sampah</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          {% for cs in class_summary %}
+          <div style="background:rgba(255,255,255,.04);border:1px solid #1e1e35;border-radius:8px;padding:8px 12px;text-align:center;min-width:80px">
+            <div style="font-size:18px">{{ class_info.get(cs.predicted_class,{}).get('icon','🗑️') }}</div>
+            <div style="font-size:13px;font-weight:700;color:#eee">{{ cs.cnt }}</div>
+            <div style="font-size:10px;color:#555">{{ class_info.get(cs.predicted_class,{}).get('label', cs.predicted_class) }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Edit Panel -->
+  {% if user.id != session.get('user_id') %}
+  <div id="editPanel" style="display:none;margin-bottom:1.5rem">
+    <div class="eco-card">
+      <div class="eco-card-header"><i class="fas fa-edit" style="color:#00ff88"></i> Edit Data User: {{ user.username }}</div>
+      <div class="eco-card-body">
+        <form method="POST" action="{{ url_for('admin_user_edit', uid=user.id) }}">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">
+            <div>
+              <label style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Nama Lengkap</label>
+              <input type="text" name="full_name" value="{{ user.full_name or '' }}" style="width:100%;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid #1e1e35;border-radius:8px;color:#eee;font-family:inherit;font-size:13px;outline:none">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Email</label>
+              <input type="email" name="email" value="{{ user.email or '' }}" style="width:100%;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid #1e1e35;border-radius:8px;color:#eee;font-family:inherit;font-size:13px;outline:none">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Password Baru</label>
+              <input type="password" name="new_password" placeholder="Kosongkan jika tidak diubah" style="width:100%;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid #1e1e35;border-radius:8px;color:#eee;font-family:inherit;font-size:13px;outline:none">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Role</label>
+              <select name="role" style="width:100%;padding:8px 12px;background:#0f0f1e;border:1px solid #1e1e35;border-radius:8px;color:#eee;font-family:inherit;font-size:13px;outline:none">
+                <option value="user" {% if user.role=='user' %}selected{% endif %}>user</option>
+                <option value="admin" {% if user.role=='admin' %}selected{% endif %}>admin</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Status Akun</label>
+              <select name="is_active" style="width:100%;padding:8px 12px;background:#0f0f1e;border:1px solid #1e1e35;border-radius:8px;color:#eee;font-family:inherit;font-size:13px;outline:none">
+                <option value="1" {% if user.is_active %}selected{% endif %}>Aktif</option>
+                <option value="" {% if not user.is_active %}selected{% endif %}>Nonaktif</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button type="submit" style="width:100%;padding:9px;background:#00ff88;border:none;color:#000;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700"><i class="fas fa-save"></i> Simpan</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Classification History -->
+  <div class="eco-card" style="overflow:hidden">
+    <div class="eco-card-header">
+      <i class="fas fa-history" style="color:#00ff88"></i>
+      Riwayat Klasifikasi ({{ classifications|length }} data)
+    </div>
+    <div style="overflow-x:auto">
+      <table class="admin-table">
+        <thead>
+          <tr><th>#</th><th>Gambar</th><th>Kategori</th><th>Confidence</th><th>Waktu</th></tr>
+        </thead>
+        <tbody>
+          {% for c in classifications %}
+          <tr>
+            <td style="color:#555;font-size:12px">{{ c.id }}</td>
+            <td>
+              <img src="{{ url_for('static', filename='uploads/'+c.image_filename) }}"
+                style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #1e1e35"
+                onerror="this.src='https://via.placeholder.com/48x48/111120/555?text=?'">
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border:1px solid #1e1e35;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:#ddd">
+                {{ c.icon or '🗑️' }} {{ c.label or c.predicted_class }}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:60px;height:5px;background:#1a1a2e;border-radius:3px;overflow:hidden">
+                  <div style="width:{{ (c.confidence*100)|round }}%;height:100%;background:#00ff88;border-radius:3px"></div>
+                </div>
+                <span style="font-size:13px;font-weight:600;color:#00ff88">{{ '%.1f'|format(c.confidence*100) }}%</span>
+              </div>
+            </td>
+            <td style="font-size:12px;color:#666">{{ c.created_at.strftime('%d %b %Y %H:%M') if c.created_at else '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;padding:2rem;color:#555">User ini belum melakukan klasifikasi.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

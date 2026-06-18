@@ -1,0 +1,25 @@
+# EcoScan — Waste Classifier
+# Install: pip install -r requirements.txt
+
+# Web Framework
+flask==3.0.0
+werkzeug==3.0.1
+
+# Database
+mysql-connector-python==8.3.0
+
+# Deep Learning
+tensorflow>=2.14.0      # atau tensorflow-cpu untuk server tanpa GPU
+# alternatif: keras>=3.0
+
+# Image Processing
+pillow>=10.0.0
+numpy>=1.24.0
+
+# Training utilities
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.13.0
+
+# Security
+bcrypt>=4.1.0
