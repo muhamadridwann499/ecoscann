@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Admin — EcoScan{% endblock %}
+{% block page_title %}Dashboard Admin{% endblock %}
+{% block breadcrumb %}Admin &rsaquo; Dashboard{% endblock %}
+{% block extra_css %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Dashboard <span class="gradient-text">Admin</span></h1>
+    <p>Selamat datang, {{ session.username }} · Kelola sistem klasifikasi sampah</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="stats-kpi-grid">
+      <div class="kpi-card kpi-accent">
+        <div class="kpi-icon"><i class="fas fa-layer-group"></i></div>
+        <div class="kpi-val">{{ stats.total or 0 }}</div>
+        <div class="kpi-label">Total Klasifikasi</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-brain"></i></div>
+        <div class="kpi-val">{{ model_info.get('architecture', 'MobileNetV2') }}</div>
+        <div class="kpi-label">Arsitektur Model</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+        <div class="kpi-val">
+          {% if model_info.get('val_accuracy') %}
+            {{ "%.1f"|format(model_info.val_accuracy * 100) }}%
+          {% else %}Belum Dilatih{% endif %}
+        </div>
+        <div class="kpi-label">Val. Accuracy Model</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-bullseye"></i></div>
+        <div class="kpi-val">{{ "%.1f"|format(stats.avg_conf or 0) }}%</div>
+        <div class="kpi-label">Rata-rata Kepercayaan</div>
+      </div>
+    </div>
+
+    {% if model_info %}
+    <div class="info-card">
+      <h3><i class="fas fa-info-circle"></i> Informasi Model CNN</h3>
+      <div class="info-grid">
+        <div><span>Versi</span><strong>{{ model_info.get('version', '-') }}</strong></div>
+        <div><span>Arsitektur</span><strong>{{ model_info.get('architecture', '-') }}</strong></div>
+        <div><span>Val Accuracy</span><strong>{{ "%.2f"|format((model_info.get('val_accuracy') or 0) * 100) }}%</strong></div>
+        <div><span>Total Epochs</span><strong>{{ model_info.get('total_epochs', '-') }}</strong></div>
+        <div><span>Dataset</span><strong>{{ model_info.get('dataset_size', '-') }} gambar</strong></div>
+        <div><span>Dibuat</span><strong>{{ model_info.get('created_at', '-') }}</strong></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="section-header" style="margin-top:2rem">
+      <h3>Klasifikasi Terbaru</h3>
+      <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline">Lihat Semua</a>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>#</th><th>Gambar</th><th>Kategori</th><th>Kepercayaan</th><th>Waktu</th><th>Aksi</th></tr>
+        </thead>
+        <tbody>
+          {% for row in recent %}
+          <tr>
+            <td>{{ row.id }}</td>
+            <td><img src="{{ url_for('static', filename='uploads/' + row.image_filename) }}" class="table-thumb" onerror="this.style.display='none'"></td>
+            <td><span class="table-badge" style="border-color:{{ row.color_code or '#888' }}">{{ row.icon or '🗑️' }} {{ row.label or row.predicted_class }}</span></td>
+            <td>{{ "%.1f"|format(row.confidence_pct) }}%</td>
+            <td>{{ row.created_at.strftime('%d/%m/%Y %H:%M') if row.created_at else '-' }}</td>
+            <td>
+              <form action="{{ url_for('delete_record', record_id=row.id) }}" method="post" onsubmit="return confirm('Hapus record ini?')">
+                <button type="submit" class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

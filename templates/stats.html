@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Statistik — EcoScan{% endblock %}
+{% block page_title %}Statistik{% endblock %}
+{% block breadcrumb %}Statistik{% endblock %}
+{% block extra_css %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Statistik <span class="gradient-text">Sistem</span></h1>
+    <p>Analisis distribusi klasifikasi sampah</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="stats-kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-layer-group"></i></div>
+        <div class="kpi-val">{{ summary.total or 0 }}</div>
+        <div class="kpi-label">Total Klasifikasi</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-bullseye"></i></div>
+        <div class="kpi-val">{{ "%.1f"|format(summary.avg_conf or 0) }}%</div>
+        <div class="kpi-label">Rata-rata Keyakinan</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-tags"></i></div>
+        <div class="kpi-val">6</div>
+        <div class="kpi-label">Kategori Aktif</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="kpi-val">{{ summary.last_pred or '-' }}</div>
+        <div class="kpi-label">Prediksi Terakhir</div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Distribusi Kategori</h3>
+        <canvas id="doughnutChart" height="280"></canvas>
+      </div>
+      <div class="chart-card chart-card-wide">
+        <h3>Tren 30 Hari Terakhir</h3>
+        <canvas id="lineChart" height="280"></canvas>
+      </div>
+    </div>
+
+    {% if distribution %}
+    <div class="dist-table-wrap">
+      <h3>Detail per Kategori</h3>
+      <table class="data-table">
+        <thead><tr><th>Kategori</th><th>Total</th><th>Persentase</th><th>Rata-rata Keyakinan</th></tr></thead>
+        <tbody>
+          {% for row in distribution %}
+          {% set info = class_info.get(row.predicted_class, {}) %}
+          <tr>
+            <td><span class="table-badge" style="border-color:{{ info.color or '#888' }}">{{ info.icon or '🗑️' }} {{ info.label or row.predicted_class }}</span></td>
+            <td>{{ row.total }}</td>
+            <td>
+              <div class="conf-mini">
+                <div class="conf-mini-bar" style="width:{{ row.percentage }}%;background:{{ info.color or '#888' }}"></div>
+                <span>{{ row.percentage }}%</span>
+              </div>
+            </td>
+            <td>{{ row.avg_confidence_pct }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+const dist = {{ distribution | tojson }};
+const daily = {{ daily | tojson }};
+const classInfo = {{ class_info | tojson }};
+
+// Doughnut
+const dCtx = document.getElementById('doughnutChart').getContext('2d');
+new Chart(dCtx, {
+  type: 'doughnut',
+  data: {
+    labels: dist.map(d => classInfo[d.predicted_class]?.label || d.predicted_class),
+    datasets: [{
+      data: dist.map(d => d.total),
+      backgroundColor: dist.map(d => classInfo[d.predicted_class]?.color || '#888'),
+      borderWidth: 3,
+      borderColor: '#0f0f1a',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { color: '#ccc', padding: 15 } } },
+    cutout: '60%',
+  }
+});
+
+// Line chart
+const lCtx = document.getElementById('lineChart').getContext('2d');
+new Chart(lCtx, {
+  type: 'line',
+  data: {
+    labels: daily.map(d => d.date),
+    datasets: [{
+      label: 'Klasifikasi per Hari',
+      data: daily.map(d => d.cnt),
+      borderColor: '#00ff88',
+      backgroundColor: 'rgba(0,255,136,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#00ff88',
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { ticks: { color: '#888' }, grid: { color: '#222' } },
+      y: { ticks: { color: '#888' }, grid: { color: '#222' }, beginAtZero: true }
+    },
+    plugins: { legend: { labels: { color: '#ccc' } } }
+  }
+});
+</script>
+{% endblock %}

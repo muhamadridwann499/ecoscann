@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — EcoScan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--accent:#00ff88;--bg:#07070f;--card:#0f0f1e;--border:#1a1a30;--text:#e0e0f0;--text2:#888;--danger:#ff4444}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;position:relative;overflow:hidden}
+    .bg-glow{position:fixed;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,136,.06) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0}
+    .bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.03) 1px,transparent 1px);background-size:40px 40px;z-index:0;pointer-events:none}
+    .card{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.5rem 2rem;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+    .logo{text-align:center;margin-bottom:2rem}
+    .logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#00ff88,#00c86e);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:1rem;box-shadow:0 8px 32px rgba(0,255,136,.25)}
+    .logo h1{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:4px}
+    .logo p{font-size:.85rem;color:var(--text2)}
+    .flash-box{padding:.75rem 1rem;border-radius:10px;font-size:.85rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+    .flash-error{background:rgba(255,68,68,.12);border:1px solid rgba(255,68,68,.3);color:#ff6b6b}
+    .flash-success{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:var(--accent)}
+    .form-group{margin-bottom:1.25rem}
+    label{display:block;font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .input-wrap{position:relative}
+    .input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#444;font-size:14px}
+    input[type=text],input[type=password]{width:100%;padding:.8rem .8rem .8rem 2.6rem;background:rgba(255,255,255,.04);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:.95rem;font-family:'DM Sans',sans-serif;outline:none;transition:.2s}
+    input:focus{border-color:var(--accent);background:rgba(0,255,136,.04)}
+    .btn-login{width:100%;padding:.9rem;background:linear-gradient(135deg,#00ff88,#00c86e);border:none;border-radius:10px;color:#000;font-size:1rem;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:.2s;margin-top:.5rem}
+    .btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,255,136,.3)}
+    .footer-link{text-align:center;margin-top:1.5rem;font-size:.85rem;color:var(--text2)}
+    .footer-link a{color:var(--accent);text-decoration:none;font-weight:600}
+    .footer-link a:hover{text-decoration:underline}
+    .divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:#333;font-size:.75rem}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .eye-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;cursor:pointer;padding:4px;font-size:13px}
+    .eye-toggle:hover{color:#aaa}
+  </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">♻</div>
+    <h1>EcoScan</h1>
+    <p>Masuk ke akun Anda</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div class="flash-box flash-{{ cat }}">
+          <i class="fas fa-{{ 'check-circle' if cat=='success' else 'exclamation-circle' }}"></i> {{ msg }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label>Username / ID</label>
+      <div class="input-wrap">
+        <i class="fas fa-user"></i>
+        <input type="text" name="username" placeholder="Masukkan username atau ID" required autocomplete="username">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-wrap">
+        <i class="fas fa-lock"></i>
+        <input type="password" name="password" id="pwInput" placeholder="Masukkan password" required autocomplete="current-password">
+        <button type="button" class="eye-toggle" onclick="togglePw()"><i class="fas fa-eye" id="eyeIcon"></i></button>
+      </div>
+    </div>
+    <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt"></i> Masuk</button>
+  </form>
+
+  <div class="divider">atau</div>
+  <div class="footer-link">
+    Belum punya akun? <a href="{{ url_for('register') }}">Daftar di sini</a>
+  </div>
+</div>
+
+<script>
+function togglePw(){
+  const i=document.getElementById('pwInput');
+  const e=document.getElementById('eyeIcon');
+  if(i.type==='password'){i.type='text';e.className='fas fa-eye-slash'}
+  else{i.type='password';e.className='fas fa-eye'}
+}
+</script>
+</body>
+</html>

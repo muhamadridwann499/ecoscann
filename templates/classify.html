@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}Klasifikasi — EcoScan{% endblock %}
+{% block page_title %}Klasifikasi Sampah{% endblock %}
+{% block breadcrumb %}Klasifikasi{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>Klasifikasi Sampah <span class="gradient-text">Cerdas</span></h1>
+    <p>Upload foto sampah untuk mendapatkan klasifikasi otomatis berbasis CNN</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container classify-layout">
+
+    <!-- Upload Panel -->
+    <div class="upload-panel" id="uploadPanel">
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-content" id="dropContent">
+          <div class="drop-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+          <h3>Seret & Lepas Foto</h3>
+          <p>atau klik untuk memilih file</p>
+          <p class="drop-hint">JPG, PNG, WEBP — Maks. 16MB</p>
+          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-folder-open"></i> Pilih File
+          </button>
+        </div>
+        <img id="previewImg" class="preview-img hidden" alt="Preview">
+        <div class="preview-overlay hidden" id="previewOverlay">
+          <button class="btn btn-sm btn-outline" onclick="resetUpload()"><i class="fas fa-redo"></i> Ganti Foto</button>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp" hidden>
+
+      <div class="upload-actions">
+        <button class="btn btn-primary btn-lg btn-full" id="classifyBtn" disabled onclick="classifyImage()">
+          <i class="fas fa-search"></i> Klasifikasi Sekarang
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-panel hidden" id="loadingPanel">
+        <div class="loading-spinner"></div>
+        <p>Menganalisis gambar dengan CNN…</p>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div class="result-panel" id="resultPanel">
+      <div class="result-empty" id="resultEmpty">
+        <div class="result-empty-icon">🔍</div>
+        <h3>Hasil Klasifikasi</h3>
+        <p>Upload dan proses gambar untuk melihat hasil di sini</p>
+        <div class="hint-categories">
+          {% for key, info in class_info.items() %}
+          <span class="hint-chip" style="border-color: {{ info.color }}">{{ info.icon }} {{ info.label }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="result-content hidden" id="resultContent">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Result Template (hidden, cloned by JS) -->
+<template id="resultTemplate">
+  <div class="result-header">
+    <div class="result-icon-wrap">
+      <span class="result-big-icon" id="rIcon"></span>
+    </div>
+    <div class="result-title-wrap">
+      <div class="result-label" id="rLabel"></div>
+      <div class="result-class" id="rClass"></div>
+      <div class="recycle-badge" id="rRecyclable"></div>
+    </div>
+  </div>
+
+  <div class="confidence-block">
+    <div class="conf-row">
+      <span>Tingkat Kepercayaan</span>
+      <span class="conf-value" id="rConfValue"></span>
+    </div>
+    <div class="conf-bar-bg">
+      <div class="conf-bar-fill" id="rConfBar"></div>
+    </div>
+  </div>
+
+  <div class="prob-block">
+    <h4>Probabilitas Semua Kelas</h4>
+    <div class="prob-list" id="rProbList"></div>
+  </div>
+
+  <div class="tips-block" id="rTipsBlock">
+    <h4><i class="fas fa-lightbulb"></i> Tips Daur Ulang</h4>
+    <p id="rTips"></p>
+  </div>
+
+  <div class="result-meta">
+    <span><i class="fas fa-clock"></i> Waktu Proses: <span id="rTime"></span>s</span>
+    <span id="rDemoNote" class="demo-note hidden"><i class="fas fa-flask"></i> Mode Demo (model belum dilatih)</span>
+  </div>
+
+  <div class="result-actions">
+    <button class="btn btn-outline" onclick="resetUpload()"><i class="fas fa-redo"></i> Klasifikasi Lagi</button>
+    <a href="{{ url_for('history') }}" class="btn btn-sm btn-ghost"><i class="fas fa-history"></i> Lihat Riwayat</a>
+  </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CLASS_INFO = {{ class_info | tojson }};
+
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('fileInput');
+const previewImg = document.getElementById('previewImg');
+const dropContent= document.getElementById('dropContent');
+const previewOvl = document.getElementById('previewOverlay');
+const classifyBtn= document.getElementById('classifyBtn');
+const loadingPanel=document.getElementById('loadingPanel');
+const resultEmpty= document.getElementById('resultEmpty');
+const resultContent=document.getElementById('resultContent');
+
+let selectedFile = null;
+
+// Drop zone events
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    previewImg.src = ev.target.result;
+    previewImg.classList.remove('hidden');
+    dropContent.classList.add('hidden');
+    previewOvl.classList.remove('hidden');
+    classifyBtn.disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetUpload() {
+  selectedFile = null;
+  previewImg.src = '';
+  previewImg.classList.add('hidden');
+  dropContent.classList.remove('hidden');
+  previewOvl.classList.add('hidden');
+  classifyBtn.disabled = true;
+  fileInput.value = '';
+  resultContent.classList.add('hidden');
+  resultEmpty.classList.remove('hidden');
+  loadingPanel.classList.add('hidden');
+}
+
+async function classifyImage() {
+  if (!selectedFile) return;
+  classifyBtn.disabled = true;
+  loadingPanel.classList.remove('hidden');
+  resultContent.classList.add('hidden');
+  resultEmpty.classList.add('hidden');
+
+  // Fake progress animation
+  let prog = 0;
+  const fill = document.getElementById('progressFill');
+  const interval = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 15, 90);
+    fill.style.width = prog + '%';
+  }, 200);
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  try {
+    const resp = await fetch('/classify', { method: 'POST', body: formData });
+    const data = await resp.json();
+    clearInterval(interval);
+    fill.style.width = '100%';
+    setTimeout(() => {
+      loadingPanel.classList.add('hidden');
+      if (data.success) showResult(data);
+      else alert('Error: ' + (data.error || 'Terjadi kesalahan'));
+      classifyBtn.disabled = false;
+    }, 400);
+  } catch(err) {
+    clearInterval(interval);
+    loadingPanel.classList.add('hidden');
+    alert('Gagal menghubungi server: ' + err.message);
+    classifyBtn.disabled = false;
+  }
+}
+
+function showResult(d) {
+  const tpl = document.getElementById('resultTemplate').content.cloneNode(true);
+  const info = CLASS_INFO[d.predicted_class] || {};
+
+  tpl.getElementById('rIcon').textContent = d.icon;
+  tpl.getElementById('rLabel').textContent = d.label;
+  tpl.getElementById('rClass').textContent = d.predicted_class;
+
+  const recBadge = tpl.getElementById('rRecyclable');
+  if (d.is_recyclable) {
+    recBadge.innerHTML = '<i class="fas fa-recycle"></i> Dapat Didaur Ulang';
+    recBadge.className = 'recycle-badge badge-green';
+  } else {
+    recBadge.innerHTML = '<i class="fas fa-trash"></i> Tidak Dapat Didaur Ulang';
+    recBadge.className = 'recycle-badge badge-grey';
+  }
+
+  tpl.getElementById('rConfValue').textContent = d.confidence + '%';
+  const bar = tpl.getElementById('rConfBar');
+  bar.style.width = d.confidence + '%';
+  bar.style.background = d.color;
+
+  // Prob list
+  const probList = tpl.getElementById('rProbList');
+  const sorted = Object.entries(d.probabilities).sort((a,b) => b[1]-a[1]);
+  sorted.forEach(([cls, pct]) => {
+    const ci = CLASS_INFO[cls] || {};
+    const row = document.createElement('div');
+    row.className = 'prob-row' + (cls === d.predicted_class ? ' prob-row-active' : '');
+    row.innerHTML = `
+      <span class="prob-cls">${ci.icon||'🗑️'} ${ci.label||cls}</span>
+      <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${pct}%;background:${ci.color||'#888'}"></div></div>
+      <span class="prob-pct">${pct}%</span>`;
+    probList.appendChild(row);
+  });
+
+  if (d.recycling_tips) {
+    tpl.getElementById('rTips').textContent = d.recycling_tips;
+  } else {
+    tpl.getElementById('rTipsBlock').style.display = 'none';
+  }
+
+  tpl.getElementById('rTime').textContent = d.processing_time;
+  if (d.demo_mode) tpl.getElementById('rDemoNote').classList.remove('hidden');
+
+  resultContent.innerHTML = '';
+  resultContent.appendChild(tpl);
+  resultContent.classList.remove('hidden');
+  resultContent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+{% endblock %}

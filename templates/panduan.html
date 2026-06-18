@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Panduan Daur Ulang — EcoScan{% endblock %}
+{% block page_title %}Panduan Daur Ulang{% endblock %}
+{% block breadcrumb %}Edukasi &rsaquo; Panduan Daur Ulang{% endblock %}
+{% block content %}
+<div class="page-hero-sm">
+  <h1>♻️ Panduan Daur Ulang</h1>
+  <p>Langkah-langkah proses daur ulang dan cara pengolahan untuk setiap jenis sampah</p>
+</div>
+<div style="padding:1rem 2rem 0;display:flex;gap:8px;flex-wrap:wrap" id="wastePills">
+  {% for key, w in waste_data.items() %}
+  <button class="waste-pill {% if loop.first %}active{% endif %}" onclick="selectWaste('{{ key }}',this)">{{ w.icon }} {{ w.label }}</button>
+  {% endfor %}
+</div>
+<div style="padding:1.5rem 2rem" id="panduanContent"></div>
+<script>
+const WD = {{ waste_data|tojson }};
+let cur = '{{ waste_data.keys()|list|first }}';
+function selectWaste(k,btn){
+  cur=k;
+  document.querySelectorAll('.waste-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');render(k);
+}
+function render(k){
+  const w=WD[k];
+  document.getElementById('panduanContent').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div class="eco-card">
+        <div class="eco-card-header" style="background:rgba(0,255,136,.05)"><span style="font-size:20px">${w.icon}</span> Proses Daur Ulang ${w.label}</div>
+        <div class="eco-card-body">${w.recycling_steps.map((s,i)=>`<div class="eco-step"><div class="eco-step-num">${i+1}</div><div class="eco-step-body"><h5>${s.title}</h5><p>${s.desc}</p></div></div>`).join('')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1.25rem">
+        <div class="eco-card">
+          <div class="eco-card-header"><i class="fas fa-cogs" style="color:#EF9F27"></i> Cara Pengolahan</div>
+          <div class="eco-card-body">${w.processing_steps.map((s,i)=>`<div class="eco-step"><div class="eco-step-num" style="background:#EF9F27">${i+1}</div><div class="eco-step-body"><h5>${s.title}</h5><p>${s.desc}</p></div></div>`).join('')}</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-header"><i class="fas fa-tag" style="color:#00ff88"></i> Harga Pasaran</div>
+          <div class="eco-card-body">${w.market_prices.map(m=>`<div class="market-row"><span>${m.item}</span><span class="market-price">${m.price}</span></div>`).join('')}</div>
+        </div>
+      </div>
+    </div>`;
+}
+render(cur);
+</script>
+{% endblock %}
